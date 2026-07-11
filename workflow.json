@@ -1,0 +1,341 @@
+{
+  "id": "lead-qualifier-001",
+  "name": "lead-qualifier",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "2a2b2c2d-0001-4000-8000-000000000001",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -600,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs = require('fs');\nconst path = require('path');\nconst os = require('os');\n\nconst baseDir = path.join(os.homedir(), 'lead-qualifier-data');\nconst dirs = ['inbox', 'hot-leads', 'cold-leads', 'flagged', 'processed'];\n\nfor (const d of dirs) {\n  fs.mkdirSync(path.join(baseDir, d), { recursive: true });\n}\n\nconst inboxDir = path.join(baseDir, 'inbox').split(path.sep).join('/');\n\nreturn [{ json: { inboxDir } }];"
+      },
+      "id": "2a2b2c2d-0002-4000-8000-000000000002",
+      "name": "Prepare Inbox",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -360,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "fileSelector": "={{ $json.inboxDir }}/*.json",
+        "options": {}
+      },
+      "id": "2a2b2c2d-0003-4000-8000-000000000003",
+      "name": "Read Lead Files",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -120,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "fromJson",
+        "binaryPropertyName": "data",
+        "destinationKey": "lead",
+        "options": {
+          "keepSource": "json"
+        }
+      },
+      "id": "2a2b2c2d-0004-4000-8000-000000000004",
+      "name": "Extract Lead Data",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        120,
+        0
+      ],
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:11434/api/generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"llama3.1:8b\", stream: false, options: { temperature: 0, num_predict: 200 }, prompt: \"No thinking, no preamble, no markdown, no repeating the labels, no extra lines. You are scoring an incoming sales lead for a small automation consultancy. Output EXACTLY these 4 lines and nothing else:\\n\\nINTENT: <one short phrase, under 8 words>\\nURGENCY: <one word: low, medium, high>\\nSCORE: <a single whole number from 1 to 10 rating how qualified and ready-to-buy this lead is>\\nSUMMARY: <one sentence, under 30 words>\\n\\nLead details:\\nName: \" + (($json.lead && $json.lead.name) || \"\") + \"\\nCompany: \" + (($json.lead && $json.lead.company) || \"unknown\") + \"\\nSource: \" + (($json.lead && $json.lead.source) || \"unknown\") + \"\\nMessage: \" + ((($json.lead && $json.lead.message) || \"\").slice(0, 1500)) }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "2a2b2c2d-0005-4000-8000-000000000005",
+      "name": "Ollama Score Lead",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        360,
+        0
+      ],
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const readItems = $('Read Lead Files').all();\nconst extractItems = $('Extract Lead Data').all();\nconst httpItems = $input.all();\nconst allowedUrgencies = ['low', 'medium', 'high'];\nconst results = [];\n\n// Read Lead Files -> Extract Lead Data -> Ollama Score Lead all process\n// items 1:1 in order (no batching enabled anywhere), so zipping by index\n// is safe here even when one of them hit a per-item error.\nfor (let i = 0; i < httpItems.length; i++) {\n  const readItem = (readItems[i] && readItems[i].json) || {};\n  const extractItem = (extractItems[i] && extractItems[i].json) || {};\n  const httpItem = httpItems[i].json;\n  const lead = extractItem.lead || {};\n  const fileName = readItem.fileName || '';\n  const reasons = [];\n\n  if (extractItem.error) {\n    reasons.push('Could not read/parse lead file as JSON: ' + extractItem.error);\n  }\n\n  if (!lead.name || !String(lead.name).trim() || !lead.message || !String(lead.message).trim()) {\n    reasons.push('Lead file is missing a required field (name or message)');\n  }\n\n  if (httpItem.error) {\n    const errText = JSON.stringify(httpItem.error);\n    const modelNotFound = /model .* not found/i.test(errText);\n    reasons.push(\n      modelNotFound\n        ? 'The model set in the \"Ollama Score Lead\" node is not pulled on this machine. Run `ollama pull <model name>`, or edit the model field - see the README for picking a model based on your RAM.'\n        : 'Could not reach Ollama - is it running? (' + httpItem.error.message + ')'\n    );\n    results.push({\n      json: {\n        ...lead,\n        fileName,\n        intent: '',\n        urgency: '',\n        score: null,\n        summary: '',\n        valid: false,\n        reasons,\n        route: 'invalid',\n        checked_at: new Date().toISOString(),\n      },\n    });\n    continue;\n  }\n\n  const raw = httpItem.response || '';\n  const intentMatch = raw.match(/INTENT:\\s*(.+)/i);\n  const urgencyMatch = raw.match(/URGENCY:\\s*(.+)/i);\n  const scoreMatch = raw.match(/SCORE:\\s*(\\d+)/i);\n  const summaryMatch = raw.match(/SUMMARY:\\s*([\\s\\S]+)/i);\n\n  const intent = intentMatch ? intentMatch[1].trim() : '';\n  const urgencyRaw = urgencyMatch ? urgencyMatch[1].trim() : '';\n  const urgency = urgencyRaw.toLowerCase();\n  const scoreNum = scoreMatch ? parseInt(scoreMatch[1], 10) : NaN;\n  const summary = summaryMatch ? summaryMatch[1].trim() : '';\n\n  if (!intent || !urgencyRaw || !summary || !scoreMatch) {\n    reasons.push('Missing INTENT, URGENCY, SCORE, or SUMMARY section - could not parse model output');\n  }\n\n  if (urgencyRaw && !allowedUrgencies.includes(urgency)) {\n    reasons.push('URGENCY must be low, medium, or high - got \"' + urgencyRaw + '\"');\n  }\n\n  if (scoreMatch && (!Number.isInteger(scoreNum) || scoreNum < 1 || scoreNum > 10)) {\n    reasons.push('SCORE must be a whole number from 1-10 - got \"' + scoreMatch[1] + '\"');\n  }\n\n  const valid = reasons.length === 0;\n  const route = !valid ? 'invalid' : (scoreNum >= 7 ? 'hot' : 'cold');\n\n  results.push({\n    json: {\n      ...lead,\n      fileName,\n      intent,\n      urgency,\n      score: Number.isNaN(scoreNum) ? null : scoreNum,\n      summary,\n      valid,\n      reasons,\n      route,\n      checked_at: new Date().toISOString(),\n    },\n  });\n}\n\nreturn results;"
+      },
+      "id": "2a2b2c2d-0006-4000-8000-000000000006",
+      "name": "Parse & Validate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "hot",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Hot"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "cold",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Cold"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "invalid",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Invalid"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "Unrouted"
+        }
+      },
+      "id": "2a2b2c2d-0007-4000-8000-000000000007",
+      "name": "Switch: Route Lead",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        840,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs = require('fs');\nconst path = require('path');\nconst os = require('os');\n\nconst baseDir = path.join(os.homedir(), 'lead-qualifier-data');\nconst outDir = path.join(baseDir, 'hot-leads');\nconst inboxDir = path.join(baseDir, 'inbox');\nconst processedDir = path.join(baseDir, 'processed');\n\nfs.mkdirSync(outDir, { recursive: true });\nfs.mkdirSync(processedDir, { recursive: true });\n\nfunction uniquePath(dir, base, ext) {\n  let candidate = path.join(dir, base + ext);\n  let n = 1;\n  while (fs.existsSync(candidate)) {\n    candidate = path.join(dir, base + ' (' + n + ')' + ext);\n    n++;\n  }\n  return candidate;\n}\n\nconst items = $input.all();\nconst results = [];\n\nfor (const entry of items) {\n  const item = entry.json;\n  const filepath = uniquePath(outDir, 'lead-' + Date.now(), '.json');\n  fs.writeFileSync(filepath, JSON.stringify(item, null, 2), 'utf-8');\n\n  if (item.fileName) {\n    const sourcePath = path.join(inboxDir, item.fileName);\n    if (fs.existsSync(sourcePath)) {\n      const parsed = path.parse(item.fileName);\n      fs.renameSync(sourcePath, uniquePath(processedDir, parsed.name, parsed.ext));\n    }\n  }\n\n  results.push({ json: { ...item, saved_to: filepath } });\n}\n\nreturn results;"
+      },
+      "id": "2a2b2c2d-0008-4000-8000-000000000008",
+      "name": "Save Hot Lead",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        -180
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs = require('fs');\nconst path = require('path');\nconst os = require('os');\n\nconst baseDir = path.join(os.homedir(), 'lead-qualifier-data');\nconst outDir = path.join(baseDir, 'cold-leads');\nconst inboxDir = path.join(baseDir, 'inbox');\nconst processedDir = path.join(baseDir, 'processed');\n\nfs.mkdirSync(outDir, { recursive: true });\nfs.mkdirSync(processedDir, { recursive: true });\n\nfunction uniquePath(dir, base, ext) {\n  let candidate = path.join(dir, base + ext);\n  let n = 1;\n  while (fs.existsSync(candidate)) {\n    candidate = path.join(dir, base + ' (' + n + ')' + ext);\n    n++;\n  }\n  return candidate;\n}\n\nconst items = $input.all();\nconst results = [];\n\nfor (const entry of items) {\n  const item = entry.json;\n  const filepath = uniquePath(outDir, 'lead-' + Date.now(), '.json');\n  fs.writeFileSync(filepath, JSON.stringify(item, null, 2), 'utf-8');\n\n  if (item.fileName) {\n    const sourcePath = path.join(inboxDir, item.fileName);\n    if (fs.existsSync(sourcePath)) {\n      const parsed = path.parse(item.fileName);\n      fs.renameSync(sourcePath, uniquePath(processedDir, parsed.name, parsed.ext));\n    }\n  }\n\n  results.push({ json: { ...item, saved_to: filepath } });\n}\n\nreturn results;"
+      },
+      "id": "2a2b2c2d-0009-4000-8000-000000000009",
+      "name": "Save Cold Lead",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs = require('fs');\nconst path = require('path');\nconst os = require('os');\n\nconst baseDir = path.join(os.homedir(), 'lead-qualifier-data');\nconst outDir = path.join(baseDir, 'flagged');\nconst inboxDir = path.join(baseDir, 'inbox');\nconst processedDir = path.join(baseDir, 'processed');\n\nfs.mkdirSync(outDir, { recursive: true });\nfs.mkdirSync(processedDir, { recursive: true });\n\nfunction uniquePath(dir, base, ext) {\n  let candidate = path.join(dir, base + ext);\n  let n = 1;\n  while (fs.existsSync(candidate)) {\n    candidate = path.join(dir, base + ' (' + n + ')' + ext);\n    n++;\n  }\n  return candidate;\n}\n\nconst items = $input.all();\nconst results = [];\n\nfor (const entry of items) {\n  const item = entry.json;\n  const filepath = uniquePath(outDir, 'lead-' + Date.now(), '.json');\n  fs.writeFileSync(filepath, JSON.stringify(item, null, 2), 'utf-8');\n\n  if (item.fileName) {\n    const sourcePath = path.join(inboxDir, item.fileName);\n    if (fs.existsSync(sourcePath)) {\n      const parsed = path.parse(item.fileName);\n      fs.renameSync(sourcePath, uniquePath(processedDir, parsed.name, parsed.ext));\n    }\n  }\n\n  results.push({ json: { ...item, saved_to: filepath } });\n}\n\nreturn results;"
+      },
+      "id": "2a2b2c2d-0010-4000-8000-000000000010",
+      "name": "Save Flagged Lead",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        180
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare Inbox",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Inbox": {
+      "main": [
+        [
+          {
+            "node": "Read Lead Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Lead Files": {
+      "main": [
+        [
+          {
+            "node": "Extract Lead Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Lead Data": {
+      "main": [
+        [
+          {
+            "node": "Ollama Score Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Score Lead": {
+      "main": [
+        [
+          {
+            "node": "Parse & Validate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Validate": {
+      "main": [
+        [
+          {
+            "node": "Switch: Route Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch: Route Lead": {
+      "main": [
+        [
+          {
+            "node": "Save Hot Lead",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save Cold Lead",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save Flagged Lead",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save Flagged Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
