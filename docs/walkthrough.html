@@ -1,0 +1,373 @@
+<style>
+  :root {
+    --bg: #f3f4f2;
+    --surface: #ffffff;
+    --surface-2: #eceeec;
+    --ink: #1b1f26;
+    --muted: #5c6470;
+    --line: #dbdedb;
+    --hot: #c5631f;
+    --hot-bg: #fbeee1;
+    --cold: #37658a;
+    --cold-bg: #e7f0f6;
+    --flag: #a83f30;
+    --flag-bg: #f7e6e2;
+    --valid: #3f7a54;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14161b;
+      --surface: #1c1f26;
+      --surface-2: #21242c;
+      --ink: #edeff2;
+      --muted: #9298a3;
+      --line: #33373f;
+      --hot: #e2953f;
+      --hot-bg: #3a2a18;
+      --cold: #6fa0c4;
+      --cold-bg: #1c2b36;
+      --flag: #d9765f;
+      --flag-bg: #3a1f1a;
+      --valid: #7ec18f;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14161b;
+    --surface: #1c1f26;
+    --surface-2: #21242c;
+    --ink: #edeff2;
+    --muted: #9298a3;
+    --line: #33373f;
+    --hot: #e2953f;
+    --hot-bg: #3a2a18;
+    --cold: #6fa0c4;
+    --cold-bg: #1c2b36;
+    --flag: #d9765f;
+    --flag-bg: #3a1f1a;
+    --valid: #7ec18f;
+  }
+  :root[data-theme="light"] {
+    --bg: #f3f4f2;
+    --surface: #ffffff;
+    --surface-2: #eceeec;
+    --ink: #1b1f26;
+    --muted: #5c6470;
+    --line: #dbdedb;
+    --hot: #c5631f;
+    --hot-bg: #fbeee1;
+    --cold: #37658a;
+    --cold-bg: #e7f0f6;
+    --flag: #a83f30;
+    --flag-bg: #f7e6e2;
+    --valid: #3f7a54;
+  }
+
+  * { box-sizing: border-box; }
+
+  .page {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    line-height: 1.5;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+
+  .eyebrow {
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 0.9rem;
+  }
+
+  h1 {
+    font-family: "Iowan Old Style", Charter, Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(1.7rem, 4vw, 2.35rem);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    margin: 0 0 0.9rem;
+  }
+
+  .lede {
+    font-size: 1.08rem;
+    color: var(--muted);
+    max-width: 62ch;
+    margin: 0 0 2.6rem;
+  }
+
+  .lede strong { color: var(--ink); font-weight: 600; }
+
+  h2 {
+    font-family: "Iowan Old Style", Charter, Georgia, serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0 0 0.3rem;
+  }
+
+  .section-note {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin: 0 0 1.4rem;
+    max-width: 60ch;
+  }
+
+  section { margin-bottom: 3rem; }
+
+  /* --- pipeline --- */
+  .pipeline {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--surface);
+  }
+
+  .stage {
+    padding: 1.3rem 1.1rem;
+    border-right: 1px solid var(--line);
+    position: relative;
+  }
+  .stage:last-child { border-right: none; }
+
+  .stage::after {
+    content: "→";
+    position: absolute;
+    right: -0.75rem;
+    top: 1.2rem;
+    color: var(--muted);
+    font-size: 1rem;
+    z-index: 1;
+  }
+  .stage:last-child::after { content: none; }
+
+  .stage-num {
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+
+  .stage-title {
+    font-weight: 600;
+    font-size: 0.98rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .stage-desc {
+    font-size: 0.86rem;
+    color: var(--muted);
+    line-height: 1.45;
+  }
+
+  @media (max-width: 640px) {
+    .pipeline { grid-template-columns: 1fr; }
+    .stage { border-right: none; border-bottom: 1px solid var(--line); }
+    .stage:last-child { border-bottom: none; }
+    .stage::after { content: "↓"; right: auto; left: 1.1rem; top: auto; bottom: -0.85rem; }
+    .stage:last-child::after { content: none; }
+  }
+
+  /* --- example cards --- */
+  .examples {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.1rem;
+  }
+  @media (max-width: 640px) {
+    .examples { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 1.3rem 1.3rem 1.4rem;
+  }
+
+  .card-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    margin-bottom: 0.9rem;
+  }
+  .tag-hot { background: var(--hot-bg); color: var(--hot); }
+  .tag-flag { background: var(--flag-bg); color: var(--flag); }
+
+  .card-lead-name {
+    font-weight: 600;
+    font-size: 1.02rem;
+    margin-bottom: 0.15rem;
+  }
+  .card-lead-meta {
+    color: var(--muted);
+    font-size: 0.83rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .card-message {
+    font-size: 0.87rem;
+    color: var(--ink);
+    background: var(--surface-2);
+    border-radius: 8px;
+    padding: 0.7rem 0.85rem;
+    margin-bottom: 1rem;
+    font-style: italic;
+  }
+  .card-message.blank {
+    color: var(--muted);
+    font-style: normal;
+  }
+
+  .field-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.4rem 0;
+    border-top: 1px solid var(--line);
+    font-size: 0.88rem;
+  }
+  .field-row:first-of-type { border-top: none; }
+  .field-label { color: var(--muted); }
+  .field-value {
+    font-weight: 600;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .verdict {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--line);
+    font-size: 0.88rem;
+  }
+  .verdict-headline {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+  .verdict.is-hot .verdict-headline { color: var(--hot); }
+  .verdict.is-flag .verdict-headline { color: var(--flag); }
+  .verdict-sub { color: var(--muted); }
+
+  /* --- lesson callout --- */
+  .callout {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--flag);
+    border-radius: 10px;
+    padding: 1.1rem 1.3rem;
+    margin-top: 1.4rem;
+    font-size: 0.95rem;
+  }
+  .callout strong { color: var(--ink); }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 1.4rem;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+  footer code {
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    background: var(--surface-2);
+    padding: 0.1rem 0.4rem;
+    border-radius: 5px;
+    font-size: 0.82rem;
+  }
+</style>
+
+<div class="page">
+  <p class="eyebrow">How it actually works — no code required</p>
+  <h1>What happens when a lead comes in</h1>
+  <p class="lede">
+    This walks through <strong>lead-qualifier</strong>, a real automation that scores incoming
+    sales leads with AI and sorts them — hot leads for immediate follow-up, cold or broken
+    ones set aside. Both examples below are <strong>real runs</strong>, executed live, not mocked up.
+  </p>
+
+  <section>
+    <h2>The pipeline</h2>
+    <p class="section-note">Four steps, the same shape whether it's built in n8n, Zapier, or a plain script.</p>
+    <div class="pipeline">
+      <div class="stage">
+        <div class="stage-num">1</div>
+        <div class="stage-title">Lead arrives</div>
+        <div class="stage-desc">A new inquiry lands — from a web form, a CRM export, however it currently reaches you.</div>
+      </div>
+      <div class="stage">
+        <div class="stage-num">2</div>
+        <div class="stage-title">AI reads it</div>
+        <div class="stage-desc">A local model reads the message and rates intent, urgency, and a 1–10 fit score.</div>
+      </div>
+      <div class="stage">
+        <div class="stage-num">3</div>
+        <div class="stage-title">Checked, not trusted</div>
+        <div class="stage-desc">A plain rule check confirms the AI's answer is actually usable — before anything moves forward.</div>
+      </div>
+      <div class="stage">
+        <div class="stage-num">4</div>
+        <div class="stage-title">Sorted automatically</div>
+        <div class="stage-desc">Hot leads go one way for immediate follow-up. Cold or broken ones go another. Nothing sits unsorted.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Two real runs, side by side</h2>
+    <p class="section-note">Same pipeline, two different incoming leads — one solid, one broken.</p>
+    <div class="examples">
+      <div class="card">
+        <span class="card-tag tag-hot">Routed: Hot</span>
+        <div class="card-lead-name">Jordan Ellis</div>
+        <div class="card-lead-meta">Ellis Woodworks · website contact form</div>
+        <div class="card-message">"We're drowning in manual order intake and need this automated ASAP. We have budget approved and want to start this week if possible. Please call me."</div>
+        <div class="field-row"><span class="field-label">Intent</span><span class="field-value">Automate order intake, immediately</span></div>
+        <div class="field-row"><span class="field-label">Urgency</span><span class="field-value">High</span></div>
+        <div class="field-row"><span class="field-label">Fit score</span><span class="field-value">9 / 10</span></div>
+        <div class="verdict is-hot">
+          <div class="verdict-headline">→ Sent to Hot Leads</div>
+          <div class="verdict-sub">Budget confirmed, urgent, ready to start — flagged for same-day follow-up.</div>
+        </div>
+      </div>
+      <div class="card">
+        <span class="card-tag tag-flag">Routed: Flagged</span>
+        <div class="card-lead-name">(no name given)</div>
+        <div class="card-lead-meta">Blank Corp · referral</div>
+        <div class="card-message blank">Message field: empty</div>
+        <div class="field-row"><span class="field-label">AI's intent guess</span><span class="field-value">"Exploring automation"</span></div>
+        <div class="field-row"><span class="field-label">AI's urgency guess</span><span class="field-value">Medium</span></div>
+        <div class="field-row"><span class="field-label">AI's fit score</span><span class="field-value">6 / 10</span></div>
+        <div class="verdict is-flag">
+          <div class="verdict-headline">→ Sent to Flagged, not Cold</div>
+          <div class="verdict-sub">Rejected before reaching any list: name and message were both missing.</div>
+        </div>
+      </div>
+    </div>
+    <div class="callout">
+      <strong>This is the actual point of the exercise.</strong> The lead on the right had no name and
+      no message — and the AI still confidently invented an intent, an urgency, and a score, same as it
+      did for a real lead. Left alone, that's a blank contact silently entering your pipeline as if it
+      were real. The rule-based check on step 3 is what caught it and stopped it — not the AI noticing
+      its own mistake, because it didn't.
+    </div>
+  </section>
+
+  <footer>
+    Built and run live on 11 July 2026 as <code>lead-qualifier</code>. Everything above is a real
+    execution — no fabricated numbers, no staged screenshots. The workflow can be wired into n8n,
+    Zapier, Make, or a plain script, and pointed at whichever AI platform you already use.
+  </footer>
+</div>

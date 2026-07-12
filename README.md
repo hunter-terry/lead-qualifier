@@ -166,7 +166,7 @@ cp test-leads/lead-hot-01.json ~/lead-qualifier-data/inbox/
 
 - `workflow.json` — the exported n8n workflow (the actual deliverable)
 - `test-leads/` — the real test cases and results
-- `docs/` — architecture notes (if added)
+- `docs/walkthrough.html` — plain-language, client-facing demo page with two real captured runs
 - Runtime output (`hot-leads/`, `cold-leads/`, `flagged/`,
   `processed/`, `inbox/`) lives under `~/lead-qualifier-data/`, outside
   this repo — nothing runtime is shipped with the repo.

@@ -59,7 +59,8 @@ id, no `process` global in Code nodes, restart required after every
 CLI-side edit).
 
 ## Where I'm at right now (2026-07-11)
-Built and tested. Workflow runs: Schedule Trigger -> Read Lead Files
+Built, tested, and pushed public:
+[github.com/hunter-terry/lead-qualifier](https://github.com/hunter-terry/lead-qualifier). Workflow runs: Schedule Trigger -> Read Lead Files
 (native) -> Extract Lead Data (native) -> Ollama Score Lead -> Parse &
 Validate -> Switch: Route Lead (native, 3-way + fallback) -> hot-leads/
 cold-leads/ flagged/. Polls `~/lead-qualifier-data/inbox/` every 1
@@ -83,6 +84,14 @@ Two real things found and fixed through actual testing, not assumed:
   call itself (capped input length, temperature 0, num_predict cap) per
   Hunter's guidance mid-build; re-tested afterward, same clean result.
 
+## Where I'm at right now (update, 2026-07-12)
+Built `docs/walkthrough.html` — a plain-language, client-facing demo
+page for non-technical Upwork clients. Two real runs captured live
+against this workflow (a qualified hot lead scored 9/10; a blank/broken
+lead that Ollama still confidently scored until validation caught it
+and routed it to flagged). Published as a shareable Claude Artifact,
+linked from the vault's `job-search/upwork-profile.md`.
+
 ## Steps / plan
 - ~~Build Schedule Trigger -> Ollama scoring node, prove the round-trip~~ — done
 - ~~Add validation (score is a real number 1-10, required fields present)~~ — done
@@ -95,10 +104,9 @@ Two real things found and fixed through actual testing, not assumed:
   re-checked playbooks/automation-platforms.md rules, nothing else applies
 - ~~Export workflow.json, README (client-facing, same tone as inquiry-triage's),
   test-inquiries equivalent folder with real results~~ — done
-- QA checklist (standards/qa-publish-checklist.md), push to new public
-  GitHub repo (hunter-terry/lead-qualifier, matching hub/listit/auto-summary/
-  inquiry-triage's public visibility) — next, needs explicit go-ahead
-  before creating the public repo/pushing
+- ~~QA checklist (standards/qa-publish-checklist.md), push to new public
+  GitHub repo~~ — done, 2026-07-11:
+  [github.com/hunter-terry/lead-qualifier](https://github.com/hunter-terry/lead-qualifier)
 
 ## Notes
 - Reuse the RAM-based model-selection table pattern from the other
