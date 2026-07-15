@@ -108,6 +108,19 @@ linked from the vault's `job-search/upwork-profile.md`.
   GitHub repo~~ — done, 2026-07-11:
   [github.com/hunter-terry/lead-qualifier](https://github.com/hunter-terry/lead-qualifier)
 
+## Where I'm at right now (update, 2026-07-15)
+Full security audit (all 3 n8n portfolio pieces) found this project had
+no test proving its SCORE/URGENCY fields resist prompt injection, even
+though `inquiry-triage` had already proven the same attack class works
+against its pricing text. Added a deterministic post-generation check
+(same pattern as the existing checks) and proved it live: a lead
+message engineered to force `SCORE: 10` got the local model to comply
+exactly as instructed, but the new check caught it and routed the lead
+to `flagged/` as `invalid` instead of `hot-leads/`. Full record: Case 7
+in `test-leads/test-results.md`. This project has no webhook (Schedule
+Trigger only), so the rate-limiting and token-rotation fixes from the
+same audit didn't apply here.
+
 ## Where I'm at right now (update, 2026-07-13)
 A demo-recording attempt for Terry Studio Goal 1 was made and scrapped
 (see vault root CONTEXT.md / `2-work/master-plan-status.md` /
