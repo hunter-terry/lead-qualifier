@@ -108,6 +108,18 @@ linked from the vault's `job-search/upwork-profile.md`.
   GitHub repo~~ — done, 2026-07-11:
   [github.com/hunter-terry/lead-qualifier](https://github.com/hunter-terry/lead-qualifier)
 
+## Where I'm at right now (update, 2026-07-13)
+A demo-recording attempt for Terry Studio Goal 1 was made and scrapped
+(see vault root CONTEXT.md / `2-work/master-plan-status.md` /
+`playbooks/demo-recording.md`) — the `demo/` and `demo-leads/` folders
+that existed for it have been deleted, they were scratch work, not
+shipped project content. `test-leads/` (the original QA fixtures) is
+untouched. Two real, still-valid env fixes came out of that session,
+now required every time n8n starts: `NODE_FUNCTION_ALLOW_BUILTIN=fs,path,os`
+(n8n 2.29.10 blocks bare `fs`/`path`/`os` in Code nodes by default) and
+`N8N_RESTRICT_FILE_ACCESS_TO` must include this project's
+`lead-qualifier-data` path.
+
 ## Notes
 - Reuse the RAM-based model-selection table pattern from the other
   three repos' READMEs.
