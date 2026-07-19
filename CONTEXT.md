@@ -7,13 +7,20 @@ and live at github.com/hunter-terry/lead-qualifier.** The plan sections
 below are the historical approved brief, kept as the record of what was
 agreed before the build. They are not a to-do list.
 
-**Current state (corrected 2026-07-19):** this file previously still said
-"Not started yet", which was stale by about a week. The workflow, README,
-docs and test leads all exist and are committed. Two local commits add a
-prompt-injection defense on the AI scoring output and its log entry; those
-are still unpushed pending a QA pass. `lead-qualifier-crm` supersedes this
-one for demo purposes, so this version was deliberately left without its
-own front-door form.
+**Current state (re-verified 2026-07-19 against `git log @{u}..HEAD`):**
+the workflow, README, docs and test leads all exist, are committed, and
+are **pushed — nothing is unpushed**. The prompt-injection defense on the
+AI scoring output and its log entry passed QA and went public.
+
+Two corrections were made to this paragraph on the same day, which is the
+point worth remembering: it first said "Not started yet" (stale by about
+a week), and then said the defense commits "are still unpushed pending a
+QA pass" — also stale, and it contradicted the vault's root status file.
+Git was the tiebreaker both times. **Check this paragraph against
+`git log @{u}..HEAD` before trusting it; do not update it from memory.**
+
+`lead-qualifier-crm` supersedes this one for demo purposes, so this
+version was deliberately left without its own front-door form.
 
 ## Why this project (not just "another n8n workflow")
 `inquiry-triage` (github.com/hunter-terry/inquiry-triage) leans almost
