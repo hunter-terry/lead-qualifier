@@ -2,8 +2,18 @@
 (living "where I'm at" note - keep updating this as you go)
 
 ## One-liner
-Second n8n portfolio piece, for GitHub/resume/Upwork. Not started yet —
-this file IS the approved plan, ready to build in a fresh session.
+Second n8n portfolio piece, for GitHub/resume/Upwork. **Built, published,
+and live at github.com/hunter-terry/lead-qualifier.** The plan sections
+below are the historical approved brief, kept as the record of what was
+agreed before the build. They are not a to-do list.
+
+**Current state (corrected 2026-07-19):** this file previously still said
+"Not started yet", which was stale by about a week. The workflow, README,
+docs and test leads all exist and are committed. Two local commits add a
+prompt-injection defense on the AI scoring output and its log entry; those
+are still unpushed pending a QA pass. `lead-qualifier-crm` supersedes this
+one for demo purposes, so this version was deliberately left without its
+own front-door form.
 
 ## Why this project (not just "another n8n workflow")
 `inquiry-triage` (github.com/hunter-terry/inquiry-triage) leans almost
