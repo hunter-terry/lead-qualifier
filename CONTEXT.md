@@ -140,7 +140,7 @@ same audit didn't apply here.
 
 ## Where I'm at right now (update, 2026-07-13)
 A demo-recording attempt for Terry Studio Goal 1 was made and scrapped
-(see vault root CONTEXT.md / `2-work/master-plan-status.md` /
+(see vault root CONTEXT.md / `3-done/master-plan-status.md` /
 `playbooks/demo-recording.md`) — the `demo/` and `demo-leads/` folders
 that existed for it have been deleted, they were scratch work, not
 shipped project content. `test-leads/` (the original QA fixtures) is
