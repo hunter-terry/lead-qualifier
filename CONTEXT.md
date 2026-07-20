@@ -12,12 +12,17 @@ the workflow, README, docs and test leads all exist, are committed, and
 are **pushed — nothing is unpushed**. The prompt-injection defense on the
 AI scoring output and its log entry passed QA and went public.
 
-Two corrections were made to this paragraph on the same day, which is the
-point worth remembering: it first said "Not started yet" (stale by about
-a week), and then said the defense commits "are still unpushed pending a
+**Three** corrections were made to this paragraph on the same day, which
+is the point worth remembering: it first said "Not started yet" (stale by
+about a week), then said the defense commits "are still unpushed pending a
 QA pass" — also stale, and it contradicted the vault's root status file.
-Git was the tiebreaker both times. **Check this paragraph against
-`git log @{u}..HEAD` before trusting it; do not update it from memory.**
+The third: by that evening the "nothing is unpushed" line above had gone
+stale *again*, because commit `6f93054` landed after it was written. It
+was true when typed and false an hour later. Pushed and re-verified
+2026-07-19 evening. Git was the tiebreaker all three times. **Check this
+paragraph against `git log @{u}..HEAD` before trusting it; do not update
+it from memory.** A sentence about push state starts decaying the moment
+it is written — that is the nature of the claim, not carelessness.
 
 `lead-qualifier-crm` supersedes this one for demo purposes, so this
 version was deliberately left without its own front-door form.
