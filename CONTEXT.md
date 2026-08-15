@@ -27,6 +27,21 @@ it is written — that is the nature of the claim, not carelessness.
 `lead-qualifier-crm` supersedes this one for demo purposes, so this
 version was deliberately left without its own front-door form.
 
+## Where I'm at right now (update, 2026-08-15)
+Fixed the gap `2-work/agent-redteam`'s first dogfood engagement found
+(2026-08-15, its own report:
+`2-work/agent-redteam/engagements/self-dogfood-n8n/report.md`): the
+prompt-injection check on `SCORE`/`URGENCY` only caught injections that
+literally spelled out the output labels. Natural-language payloads
+requesting the same score inflation bypassed it. `Parse & Validate` now
+requires a second, independent signal from the raw message text before
+auto-routing `SCORE >= 7` to `hot-leads/` — real runs against the live
+workflow proved both the fix (Case 8) and no regression on the existing
+defense or genuine leads (Case 9), in
+`test-leads/test-results.md`. **Not yet pushed** — this repo is public
+and live, pushing needs a QA pass first; `git log @{u}..HEAD` is the
+source of truth on push state, not this note.
+
 ## Why this project (not just "another n8n workflow")
 `inquiry-triage` (github.com/hunter-terry/inquiry-triage) leans almost
 entirely on Code nodes for its logic, which undercuts n8n's own selling

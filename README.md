@@ -40,6 +40,11 @@ connector to make it real.
      malformed/empty CRM exports)
    - Rejects cleanly (not a crash) if Ollama is unreachable, and gives
      a distinct message if the model just isn't pulled yet
+   - A `SCORE >= 7` alone is never enough to auto-route as hot — the
+     raw message text must also carry an independent buying-intent
+     signal (budget, timeline, etc.) and no plain-language disinterest
+     phrase ("just browsing", "no rush"), or it's flagged for human
+     review instead. The model's own score is never trusted alone.
 6. **Switch: Route Lead** (native n8n Switch node, not an if/else in
    Code) routes on a single `route` field: `hot`, `cold`, or `invalid`,
    with a built-in fallback output for anything unexpected.
@@ -82,6 +87,19 @@ didn't refuse. Validation caught both and routed them to `flagged/`
 regardless of what the model said. That's the same lesson
 inquiry-triage's prompt-injection test proved: the model's compliance
 is never the safety net, the check downstream is.
+
+A second-party security review ([`agent-redteam`](../agent-redteam),
+2026-08-15) found that lesson had a gap: the original prompt-injection
+check only caught injections that literally spelled out the output
+format (`SCORE:`, `URGENCY:`, etc.). Two natural-language payloads that
+requested the same score inflation without those literal keywords got
+the model to comply and would have landed in `hot-leads/` undetected.
+Fixed the same day — see Case 8 in
+[`test-leads/test-results.md`](test-leads/test-results.md) for the real
+before/after runs, including a bug in the first attempt at the fix
+(caught by testing, not by reading the code) where a naive keyword
+check was itself fooled by a negated sentence ("not really looking to
+buy").
 
 ## How to run it
 
