@@ -20,6 +20,8 @@ form-to-file integration, so it's fully demoable with no real CRM,
 Slack, or email credentials. Swap the file nodes for your CRM
 connector to make it real.
 
+Part of Hunter Terry's [AI Orchestration & Verification Portfolio](https://github.com/hunter-terry/ai-orchestration-portfolio#additional-work) · [GitHub profile](https://github.com/hunter-terry)
+
 ## What it does
 
 1. **Schedule Trigger** polls on an interval (demoed at 1 minute; set
